@@ -1,24 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <build>
-  <!-- ROM bazasini tanlash: Pixel Experience 13 -->
-  <manifest url="https://github.com" branch="thirteen" />
+  <!-- Build jarayoni uchun asosiy buyruqlar -->
+  <step name="Syncing ROM and Device Sources">
+    <run>
+      # 1. Pixel Experience 13 manifestini yuklash
+      repo init -u https://github.com -b thirteen --depth=1;
 
-  <!-- Sayann70 manbalari va spes uchun kerakli tree-larni qo'shish -->
-  <remote name="sayann" fetch="https://github.com" />
-  
-  <!-- Device Tree, Kernel va Vendor -->
-  <project name="device_xiaomi_spes" path="device/xiaomi/spes" remote="sayann" revision="13" />
-  <project name="vendor_xiaomi_spes" path="vendor/xiaomi/spes" remote="sayann" revision="13" />
-  <project name="kernel_xiaomi_spes" path="kernel/xiaomi/spes" remote="sayann" revision="13" />
-  
-  <!-- Common qismlar (agar kerak bo'lsa) -->
-  <project name="device_xiaomi_sm6225-common" path="device/xiaomi/sm6225-common" remote="sayann" revision="13" />
-  <project name="vendor_xiaomi_sm6225-common" path="vendor/xiaomi/sm6225-common" remote="sayann" revision="13" />
+      # 2. Sayann70 local manifestini qo'shish (spes uchun barcha tree-larni o'z ichiga oladi)
+      mkdir -p .repo/local_manifests;
+      curl -L https://raw.githubusercontent.com > .repo/local_manifests/spes.xml;
 
-  <!-- Build buyruqlari -->
-  <commands>
-    <command>source build/envsetup.sh</command>
-    <command>lunch aosp_spes-userdebug</command>
-    <command>make bacon -j$(nproc --all)</command>
-  </commands>
+      # 3. Kodlarni yuklab olish (Sync)
+      repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags;
+    </run>
+  </step>
+
+  <step name="Starting Compilation">
+    <run>
+      # 4. Build muhitini sozlash va boshlash
+      source build/envsetup.sh;
+      lunch aosp_spes-userdebug;
+      m bacon -j$(nproc --all);
+    </run>
+  </step>
 </build>
