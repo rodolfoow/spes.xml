@@ -1,40 +1,49 @@
-name: Custom ROM Build
+name: Build Pixel Experience - spes
 
 on:
-  workflow_dispatch: # Build-ni qo'lda ishga tushirish uchun
+  workflow_dispatch: # Build-ni GitHub orqali qo'lda ishga tushirish uchun
 
 jobs:
   build:
     runs-on: ubuntu-latest
     
     steps:
-      # 1. Kodlarni yuklab olish
+      # 1. GitHub Repository kodlarini yuklab olish
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 2. Crave-ni o'rnatish
+      # 2. Crave CLI-ni ishonchli usulda o'rnatish (Xato tuzatildi)
       - name: Install Crave CLI
         run: |
           curl -s https://raw.githubusercontent.com | bash
+          # Faylni to'g'ri joyga o'tkazamiz, shunda keyingi bosqichlar uni topa oladi
           sudo install crave /usr/local/bin
 
-      # 3. crave.conf faylini yaratish (Siz so'ragan qism)
-      - name: Configure Crave
+      # 3. GitHub Secrets orqali crave.conf faylini sozlash
+      - name: Set up Crave Config
         run: |
-          echo "username: ${{ secrets.CRAVE_USERNAME }}" > crave.conf
-          echo "authToken: ${{ secrets.CRAVE_TOKEN }}" >> crave.conf
-          # Faylni to'g'ri joyga qo'yilganini tasdiqlash
           mkdir -p ~/.crave
-          cp crave.conf ~/.crave/crave.conf
+          echo "username: ${{ secrets.CRAVE_USERNAME }}" > ~/.crave/crave.conf
+          echo "authToken: ${{ secrets.CRAVE_TOKEN }}" >> ~/.crave/crave.conf
 
-      # 4. Build-ni boshlash
-      - name: Run Build Command
+      # 4. Build jarayonini boshlash
+      - name: Start Build on Crave
         run: |
-          # 'crave run' buyrug'i orqali build-ni masofadan boshlaysiz
-          # O'zingizning build buyrug'ingizni yozing (misol pastda)
-          crave run -- "repo init -u https://github.com -b lineage-21.0 --git-lfs ; \
-                        repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags ; \
-                        source build/envsetup.sh ; \
-                        lunch lineage_device-userdebug ; \
-                        mka bacon"
-                        
+          crave run -- " \
+          # ROM bazasini sozlash (Android 13)
+          repo init -u https://github.com -b thirteen --depth=1 ; \
+          
+          # Sayann70 local manifestini qo'shish (spes uchun tree-lar)
+          rm -rf .repo/local_manifests ; \
+          mkdir -p .repo/local_manifests ; \
+          curl -L https://raw.githubusercontent.com > .repo/local_manifests/spes.xml ; \
+          
+          # Kodlarni yuklab olish (Sync)
+          repo sync -c -j\$(nproc --all) --force-sync --no-clone-bundle --no-tags ; \
+          
+          # Build-ni boshlash
+          source build/envsetup.sh ; \
+          lunch aosp_spes-userdebug ; \
+          m bacon -j\$(nproc --all) \
+          "
+
