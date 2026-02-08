@@ -11,18 +11,29 @@ jobs:
 
       - name: Install and Configure Crave
         run: |
-          # Crave-ni o'rnatish
+          # 1. Crave dasturini o'rnatamiz
           curl -s https://raw.githubusercontent.com/accupara/crave/master/get_crave.sh | bash
           sudo mv crave /usr/local/bin/
-          
-          # Konfiguratsiyani bir vaqtning o'zida bir necha joyga yozamiz
-          mkdir -p ~/.crave
-          echo "${{ secrets.CRAVE_CONF_FILE }}" > ~/.crave/crave.conf
+
+          # 2. Konfiguratsiya faylini yaratamiz
           echo "${{ secrets.CRAVE_CONF_FILE }}" > crave.conf
+
+          # 3. TEKSHIRUV (DEBUG) QISMI:
+          echo "========================================"
+          echo "FAYL HAJMINI TEKSHIRISH:"
+          ls -lh crave.conf
+          
+          echo "FAYLNING BIRINCHI QATORINI O'QISH:"
+          # Agar fayl bo'sh bo'lsa, pastda hech narsa chiqmaydi
+          head -n 1 crave.conf
+          echo "========================================"
 
       - name: Run Build on Crave
         run: |
-          # -c bayrog'i orqali konfig faylni majburan ko'rsatamiz
+          # Buildni boshlash
+          # --no-patch: loyiha topilmaslik xatosini oldini oladi
+          # -c crave.conf: aniq shu fayldan foydalanishni buyuradi
+          
           crave -c crave.conf run --no-patch -- "repo init -u https://github.com/PixelExperience/manifest -b thirteen; \
           rm -rf .repo/local_manifests; \
           mkdir -p .repo/local_manifests; \
