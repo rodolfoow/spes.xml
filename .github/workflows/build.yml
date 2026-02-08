@@ -12,19 +12,25 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 2. Crave CLI-ni muqobil usulda o'rnatish
-      - name: Install Crave CLI Directly
+      # 2. Crave CLI-ni eng ishonchli usulda o'rnatish
+      - name: Install Crave CLI
         run: |
-          # 1. 'crave' faylini to'g'ridan-to'g'ri yuklab olish
-          curl -L https://github.com -o crave
+          # API orqali eng so'nggi versiyani aniqlash va 'crave' nomli fayl sifatida yuklab olish
+          # 'User-Agent' sarlavhasi GitHub API talabi hisoblanadi
+          curl -sL \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -H "User-Agent: GitHub-Actions-Workflow" \
+            "https://api.github.com" | \
+          grep "browser_download_url" | grep "linux" | cut -d '"' -f 4 | wget -qi - -O crave
           
-          # 2. Faylga ijro etish ruxsatini berish
+          # Faylga ruxsat berish
           chmod +x crave
           
-          # 3. Uni tizim PATH-iga o'tkazish
+          # Uni tizim PATH-iga o'tkazish
           sudo install crave /usr/local/bin
           
-          # 4. O'rnatilganligini tekshirish
+          # O'rnatilganligini tekshirish
           crave --version
 
       # 3. GitHub Secrets orqali crave.conf faylini sozlash
