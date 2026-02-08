@@ -9,31 +9,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install and Configure Crave
+      - name: Install Crave
         run: |
-          # 1. Crave dasturini o'rnatamiz
           curl -s https://raw.githubusercontent.com/accupara/crave/master/get_crave.sh | bash
           sudo mv crave /usr/local/bin/
 
-          # 2. Konfiguratsiya faylini yaratamiz
-          echo "${{ secrets.CRAVE_CONF_FILE }}" > crave.conf
+      - name: Configure Crave
+        env:
+          CRAVE_CONF_DATA: ${{ secrets.CRAVE_CONF_FILE }}
+        run: |
+          # Secret bo'sh emasligini tekshiramiz
+          if [ -z "$CRAVE_CONF_DATA" ]; then
+            echo "XATOLIK: CRAVE_CONF_FILE secreti bo'sh yoki topilmadi!"
+            echo "Iltimos, GitHub Settings -> Secrets -> Actions -> Repository Secrets bo'limini tekshiring."
+            exit 1
+          fi
 
-          # 3. TEKSHIRUV (DEBUG) QISMI:
-          echo "========================================"
-          echo "FAYL HAJMINI TEKSHIRISH:"
-          ls -lh crave.conf
+          # Konfiguratsiyani faylga yozamiz
+          echo "$CRAVE_CONF_DATA" > crave.conf
           
-          echo "FAYLNING BIRINCHI QATORINI O'QISH:"
-          # Agar fayl bo'sh bo'lsa, pastda hech narsa chiqmaydi
-          head -n 1 crave.conf
-          echo "========================================"
+          echo "Konfiguratsiya muvaffaqiyatli yozildi."
 
       - name: Run Build on Crave
         run: |
-          # Buildni boshlash
-          # --no-patch: loyiha topilmaslik xatosini oldini oladi
-          # -c crave.conf: aniq shu fayldan foydalanishni buyuradi
-          
+          # Buildni yuborish
           crave -c crave.conf run --no-patch -- "repo init -u https://github.com/PixelExperience/manifest -b thirteen; \
           rm -rf .repo/local_manifests; \
           mkdir -p .repo/local_manifests; \
