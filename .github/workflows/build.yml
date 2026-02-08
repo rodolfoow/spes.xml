@@ -14,25 +14,20 @@ jobs:
           curl -s https://raw.githubusercontent.com/accupara/crave/master/get_crave.sh | bash
           sudo mv crave /usr/local/bin/
 
-      - name: Configure Crave
-        env:
-          CRAVE_CONF_DATA: ${{ secrets.CRAVE_CONF_FILE }}
+      - name: Run Build
+        shell: bash
         run: |
-          # Secret bo'sh emasligini tekshiramiz
-          if [ -z "$CRAVE_CONF_DATA" ]; then
-            echo "XATOLIK: CRAVE_CONF_FILE secreti bo'sh yoki topilmadi!"
-            echo "Iltimos, GitHub Settings -> Secrets -> Actions -> Repository Secrets bo'limini tekshiring."
+          # Secretni to'g'ridan-to'g'ri faylga yozishga harakat qilamiz
+          cat <<EOF > crave.conf
+          ${{ secrets.CRAVE_CONF_FILE }}
+          EOF
+
+          # Fayl bo'sh yoki yo'qligini tekshirish
+          if [ ! -s crave.conf ] || [ "$(cat crave.conf)" == "" ]; then
+            echo "Kritik xato: Secret hali ham o'qilmayapti!"
             exit 1
           fi
 
-          # Konfiguratsiyani faylga yozamiz
-          echo "$CRAVE_CONF_DATA" > crave.conf
-          
-          echo "Konfiguratsiya muvaffaqiyatli yozildi."
-
-      - name: Run Build on Crave
-        run: |
-          # Buildni yuborish
           crave -c crave.conf run --no-patch -- "repo init -u https://github.com/PixelExperience/manifest -b thirteen; \
           rm -rf .repo/local_manifests; \
           mkdir -p .repo/local_manifests; \
